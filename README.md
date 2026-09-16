@@ -3,6 +3,7 @@
 This study applies the knowledge graph framework of Chen and Zhang (2024), *From Liquidity Risk to Systemic Risk: A Use of Knowledge Graph*, to 70 banks listed in the United States over the COVID-19 episode. 
 
 ## Findings
+
 At a cut-off $c=0.035$, we found that none of the 25 largest banks are isolated during the crisis, and the knowledge graph holds a dense core. This aligns with the expectation that firms tend to become more interconnected during crisis periods when common macroeconomic shocks overshadow idiosyncratic risks. Nevertheless, this is a claim about weak links only. A large share of strong conditional dependence in this sample occurs in the non-crisis period. At $c = 0.050$, there are 8 edges inside the crisis against 84 outside it, and the surviving structure matches the geographic split of the non-crisis graph. This matches the volatility result of Chen and Zhang (2024), which they describe as counterintuitive relative to their liquidity result.
 
 ## Layout
