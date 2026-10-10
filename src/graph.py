@@ -20,49 +20,51 @@ def log_returns(prices):
     return np.log(prices / prices.shift(1)).dropna()
 
 
-def volatility(returns, window=config.VOL_WINDOW):
-    """Annualized standard deviation over a trailing window of window trading days."""
-    return returns.rolling(window).std().dropna() * np.sqrt(config.TRADING_DAYS)
+def volatility(returns):
+    """Annualized standard deviation over a trailing window of VOL_WINDOW trading days."""
+    return returns.rolling(config.VOL_WINDOW).std().dropna() * np.sqrt(config.TRADING_DAYS)
 
 
 def standardize(df):
     return pd.DataFrame(StandardScaler().fit_transform(df), index=df.index, columns=df.columns)
 
 
+def study_window(vol):
+    return vol[(vol.index >= config.STUDY_START) & (vol.index <= config.STUDY_END)]
+
+
 def subsamples(vol, columns):
     """The study window split into the pandemic crisis and everything else within it."""
-    idx = vol.index
-    crisis = (idx >= config.CRISIS_START) & (idx < config.CRISIS_END)
-    study = (idx >= config.STUDY_START) & (idx <= config.STUDY_END)
-    return {"crisis": vol[study & crisis][columns],
-            "non-crisis": vol[study & ~crisis][columns]}
+    study = study_window(vol)[columns]
+    crisis = (study.index >= config.CRISIS_START) & (study.index < config.CRISIS_END)
+    return {"crisis": study[crisis], "non-crisis": study[~crisis]}
+
+
+def pca(scaled):
+    return PCA(n_components=config.N_COMPONENTS,
+               random_state=config.RANDOM_SEED).fit_transform(scaled)
 
 
 def embeddings(scaled):
-    """Each bank is one point in the space of its standardized volatility path."""
-    out = {}
-    out["LLE"] = LocallyLinearEmbedding(
-        n_neighbors=config.N_NEIGHBORS, n_components=config.N_COMPONENTS,
-        random_state=config.RANDOM_SEED).fit_transform(scaled)
-    out["Spectral"] = SpectralEmbedding(
-        n_components=config.N_COMPONENTS,
-        random_state=config.RANDOM_SEED).fit_transform(scaled)
-    out["PCA"] = PCA(n_components=config.N_COMPONENTS,
-                     random_state=config.RANDOM_SEED).fit_transform(scaled)
-    return out
+    """The three embeddings of Section 3; each row of scaled is one bank."""
+    return {
+        "LLE": LocallyLinearEmbedding(n_neighbors=config.N_NEIGHBORS,
+                                      n_components=config.N_COMPONENTS,
+                                      random_state=config.RANDOM_SEED).fit_transform(scaled),
+        "Spectral": SpectralEmbedding(n_components=config.N_COMPONENTS,
+                                      random_state=config.RANDOM_SEED).fit_transform(scaled),
+        "PCA": pca(scaled),
+    }
 
 
-def clusters(points, n_clusters=config.N_CLUSTERS):
-    return KMeans(n_clusters=n_clusters, random_state=config.RANDOM_SEED).fit_predict(points)
+def clusters(points):
+    return KMeans(n_clusters=config.N_CLUSTERS,
+                  random_state=config.RANDOM_SEED).fit_predict(points)
 
 
 def glasso(scaled):
-    """Precision matrix with the penalty chosen by cross validation.
-
-    The panel is close to rank one, so the fold likelihood is not finite at the zero
-    penalty end of the search grid. That is a property of this data, reported in the
-    text, and it reaches the selected penalty only through scikit-learn's own record
-    of the grid scores, which is what the filter below silences."""
+    """Precision matrix of equation (1) and the cross-validated penalty."""
+    # Fold scores are -inf at most penalties below the selected one; numpy warns on their sd.
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", "invalid value encountered", RuntimeWarning)
         model = GraphicalLassoCV(alphas=config.ALPHAS, cv=config.CV,
@@ -71,7 +73,7 @@ def glasso(scaled):
 
 
 def partial_correlation(precision):
-    """Scale free form of the precision matrix, so two fits can be compared cut-off by cut-off."""
+    """rho_ij = -Theta_ij / sqrt(Theta_ii Theta_jj) of equation (2)."""
     d = np.sqrt(np.diag(precision))
     return -precision / np.outer(d, d)
 
@@ -81,15 +83,14 @@ def off_diagonal(matrix):
 
 
 def edges(matrix, cut):
-    """Index pairs and weights above the cut-off, for the spring graph."""
+    """Edges (i, j, |rho_ij|), i < j, above the cut-off."""
     n = len(matrix)
-    out = [((i, j), abs(matrix[i, j]))
-           for i in range(n) for j in range(i + 1, n) if abs(matrix[i, j]) > cut]
-    return [e for e, _ in out], [w for _, w in out]
+    return [(i, j, abs(matrix[i, j]))
+            for i in range(n) for j in range(i + 1, n) if abs(matrix[i, j]) > cut]
 
 
 def edge_count(matrix, cut):
-    return int((np.abs(off_diagonal(matrix)) > cut).sum())
+    return len(edges(matrix, cut))
 
 
 def degrees(matrix, cut):

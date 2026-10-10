@@ -10,20 +10,18 @@ def results():
     vol = graph.volatility(returns)
     out = {"prices": prices, "returns": returns, "vol": vol}
 
-    study = vol[(vol.index >= config.STUDY_START) & (vol.index <= config.STUDY_END)]
+    study = graph.study_window(vol)
     out["study"] = study
     out["embeddings"] = graph.embeddings(graph.standardize(study).T)
 
-    parts = graph.subsamples(vol, config.TOP)
-    out["parts"] = parts
     out["panel"] = {}
-    for name, part in parts.items():
+    for name, part in graph.subsamples(vol, config.TOP).items():
         scaled = graph.standardize(part)
         precision, alpha = graph.glasso(scaled)
         rho = graph.partial_correlation(precision)
         out["panel"][name] = {
             "n": len(part), "alpha": alpha, "rho": rho,
-            "pca": graph.embeddings(scaled.T)["PCA"],
+            "pca": graph.pca(scaled.T),
             "dispersion": stats.dispersion(rho),
             "degrees": graph.degrees(rho, config.CUT_LOW),
         }
@@ -41,14 +39,14 @@ def report(out):
           f"study window {len(out['study'])}")
     for name, d in out["panel"].items():
         deg, order = d["degrees"], d["degrees"].argsort()
+        least = ", ".join(f"{config.TOP[i]} {deg[i]}" for i in order[:3])
         print(f"  {name:10s} n={d['n']:4d} alpha={d['alpha']:.3f} "
               f"partial correlation median {d['dispersion']['median']:.4f} "
               f"sd {d['dispersion']['sd']:.4f}")
         print(f"  {'':10s} at c={config.CUT_LOW}, degree runs {deg.min()} to {deg.max()}, "
-              f"least connected "
-              + ", ".join(f"{config.TOP[i]} {deg[i]}" for i in order[:3]))
+              f"least connected {least}")
     print(f"  crossing cut-off {out['crossing']}")
-    print("  edges out of 300 by common cut-off on the partial correlation")
+    print(f"  edges out of {config.N_PAIRS} by common cut-off on the partial correlation")
     for c in config.CUT_GRID:
         print(f"    c={c:.4f}  crisis {out['curve']['crisis'][c]:3d}  "
               f"non-crisis {out['curve']['non-crisis'][c]:3d}")

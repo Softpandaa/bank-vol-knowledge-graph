@@ -11,7 +11,7 @@ import main as m
 
 OKABE = ["#0072B2", "#D55E00", "#009E73", "#CC79A7", "#666666"]
 DASH = {"crisis": (0, ()), "non-crisis": (0, (5, 2))}
-COLOUR = {"crisis": OKABE[0], "non-crisis": OKABE[1]}
+COLOR = {"crisis": OKABE[0], "non-crisis": OKABE[1]}
 
 plt.rcParams.update({"font.family": "serif", "font.size": 10,
                      "axes.grid": True, "grid.alpha": 0.3})
@@ -37,13 +37,13 @@ def figure_edge_curve(out):
     fig, ax = plt.subplots(figsize=(7, 4))
     for name, curve in out["curve"].items():
         ax.plot(list(curve.keys()), list(curve.values()), label=name.capitalize(),
-                color=COLOUR[name], linestyle=DASH[name], linewidth=1.6)
+                color=COLOR[name], linestyle=DASH[name], linewidth=1.6)
     if out["crossing"] is not None:
         ax.axvline(out["crossing"], color="black", linewidth=0.8, alpha=0.6)
     for cut in (config.CUT_LOW, config.CUT_HIGH):
         ax.axvline(cut, color="black", linewidth=0.6, alpha=0.25, linestyle=":")
     ax.set_xlabel("Cut-off on the absolute partial correlation")
-    ax.set_ylabel("Edges out of 300")
+    ax.set_ylabel(f"Edges out of {config.N_PAIRS}")
     ax.legend(frameon=False)
     fig.tight_layout()
     fig.savefig(config.FIG_DIR / "edge_curve.png", dpi=200)
@@ -51,12 +51,11 @@ def figure_edge_curve(out):
 
 
 def _spring(ax, rho, points, labels, cut, title):
-    """Node colour is the k means label of the PCA embedding, as in Chen and Zhang (2024)."""
-    pairs, weights = graph.edges(rho, cut)
+    """Node color is the k-means label of the PCA embedding, as in Chen and Zhang (2024)."""
+    edges = graph.edges(rho, cut)
     G = nx.Graph()
     G.add_nodes_from(range(len(labels)))
-    for (i, j), w in zip(pairs, weights):
-        G.add_edge(i, j, weight=w)
+    G.add_weighted_edges_from(edges)
     pos = nx.spring_layout(G, seed=config.RANDOM_SEED, weight="weight")
     groups = graph.clusters(points)
     nx.draw_networkx_nodes(G, pos, node_size=190, ax=ax,
@@ -64,7 +63,7 @@ def _spring(ax, rho, points, labels, cut, title):
     nx.draw_networkx_labels(G, pos, labels=dict(enumerate(labels)), font_size=6.5, ax=ax)
     nx.draw_networkx_edges(G, pos, ax=ax, alpha=0.4,
                            width=[G[u][v]["weight"] * 40 for u, v in G.edges()])
-    ax.set_title(f"{title}, {len(pairs)} edges", fontsize=9)
+    ax.set_title(f"{title}, {len(edges)} edges", fontsize=9)
     ax.axis("off")
 
 

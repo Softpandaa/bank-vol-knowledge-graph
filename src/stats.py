@@ -7,7 +7,7 @@ import graph
 
 
 def yearly_summary(returns):
-    """Log returns pooled across banks, one row per calendar year, annualized and in per cent."""
+    """Log returns pooled across banks, one row per calendar year, annualized and in percent."""
     d = config.TRADING_DAYS
     out = returns.groupby(returns.index.year).apply(
         lambda g: pd.Series({"mean": 100 * d * g.values.mean(),
@@ -18,15 +18,12 @@ def yearly_summary(returns):
 
 
 def latex_summary(returns):
-    rows = []
-    for year, r in yearly_summary(returns).iterrows():
-        rows.append("%d & %+.1f & %+.1f & %.1f \\\\"
-                    % (year, r["mean"], r["median"], r["sd"]))
-    return "\n".join(rows)
+    return "\n".join(f"{year} & {r['mean']:+.1f} & {r['median']:+.1f} & {r['sd']:.1f} \\\\"
+                     for year, r in yearly_summary(returns).iterrows())
 
 
 def dispersion(matrix):
-    """Location and spread of the partial correlations that carry the edges."""
+    """Median and sd of |rho_ij| over all pairs i < j."""
     v = np.abs(graph.off_diagonal(matrix))
     return {"median": float(np.median(v)), "sd": float(v.std(ddof=1))}
 
