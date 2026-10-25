@@ -27,6 +27,7 @@ def figure_embedding(out):
         ax.set_xlabel("First coordinate")
         ax.set_ylabel("Second coordinate")
         ax.set_title(name)
+        ax.locator_params(axis="x", nbins=5)
         ax.legend(frameon=False, fontsize=8, title="Cluster", title_fontsize=8)
     fig.tight_layout()
     fig.savefig(config.FIG_DIR / "embedding.png", dpi=200)

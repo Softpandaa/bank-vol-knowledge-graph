@@ -19,7 +19,7 @@ The report and slides are distributed as compiled PDFs. Their typesetting source
 
 ## Data
 
-`data/bank_prices.csv` is the 70 bank stocks daily close from Yahoo Finance, from May 2017 to December 2021. The universe is the ranking by market capitalization published at stockanalysis.com.
+`data/bank_prices.csv` is the 70 bank stocks daily adjusted close from Yahoo Finance, from May 2017 to December 2021. The universe is the ranking by market capitalization published at stockanalysis.com.
 
 ## Reproducing
 
