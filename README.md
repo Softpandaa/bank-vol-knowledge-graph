@@ -4,7 +4,7 @@ This study applies the knowledge graph framework of Chen and Zhang (2024), *From
 
 ## Findings
 
-At a cut-off $c=0.035$, we found that none of the 25 largest banks are isolated during the crisis, and the knowledge graph holds a dense core. This aligns with the expectation that firms tend to become more interconnected during crisis periods when common macroeconomic shocks overshadow idiosyncratic risks. Nevertheless, this is a claim about weak links only. A large share of strong conditional dependence in this sample occurs in the non-crisis period. At $c = 0.050$, there are 8 edges inside the crisis against 84 outside it, and the surviving structure matches the geographic split of the non-crisis graph. This matches the volatility result of Chen and Zhang (2024), which they describe as counterintuitive relative to their liquidity result.
+At a cut-off $c=0.035$, we found that none of the 25 largest banks are isolated during the crisis, and the knowledge graph holds a dense core. This aligns with the expectation that firms tend to become more interconnected during crisis periods when common macroeconomic shocks overshadow idiosyncratic risks. Nevertheless, this is a claim about weak links only. A large share of strong conditional dependence in this sample occurs in the non-crisis period. At $c = 0.050$, there are 8 edges inside the crisis against 84 outside it, and the surviving structure matches the geographic split of the non-crisis graph. This matches the volatility result of Chen and Zhang (2024), which they describe as counterintuitive, since one would expect financial firms to be more connected during the crisis.
 
 ## Layout
 
@@ -12,10 +12,9 @@ At a cut-off $c=0.035$, we found that none of the 25 largest banks are isolated 
 data/     committed input prices
 src/      analysis modules, every parameter declared once in config.py
 report.pdf
-slides.pdf
 ```
 
-The report and slides are distributed as compiled PDFs. Their typesetting source is not included.
+The report is distributed as a compiled PDF. Its typesetting source is not included.
 
 ## Data
 
